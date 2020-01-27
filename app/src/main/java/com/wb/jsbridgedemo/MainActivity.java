@@ -1,6 +1,7 @@
 package com.wb.jsbridgedemo;
 
 import android.arch.lifecycle.ViewModelProvider;
+import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
@@ -8,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.JavascriptInterface;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -35,20 +37,21 @@ public class MainActivity extends AppCompatActivity {
 
         webView.loadUrl("http://192.168.31.242:8080?timestamp"+new Date().getTime());
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.setWebChromeClient(new WebChromeClient(){
-            @Override
-            public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
-                if (!message.startsWith("jsbridge://")) {
-                    return super.onJsAlert(view, url, message, result);
-                }
-                String text = message.substring(message.indexOf("=")+1);
-                Log.e("wb",text);
-                self.showNativeDialog(text);
-                result.confirm();
-                return true;
-            }
-        });
-
+//        webView.setWebChromeClient(new WebChromeClient(){
+//            @Override
+//            public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+//                if (!message.startsWith("jsbridge://")) {
+//                    return super.onJsAlert(view, url, message, result);
+//                }
+//                String text = message.substring(message.indexOf("=")+1);
+//                Log.e("wb",text);
+//                self.showNativeDialog(text);
+//                result.confirm();
+//                return true;
+//            }
+//        });
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.addJavascriptInterface(new NativeBridge(this),"NativeBridge");
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -74,5 +77,19 @@ public class MainActivity extends AppCompatActivity {
 
     private void showNativeDialog(String text){
         new AlertDialog.Builder(this).setMessage(text).create().show();
+    }
+
+    class NativeBridge{
+
+        Context ctx;
+
+        NativeBridge(Context ctx){
+            this.ctx = ctx;
+        }
+
+        @JavascriptInterface
+        public void showNativeDialog(String text){
+            new AlertDialog.Builder(ctx).setMessage(text).create().show();
+        }
     }
 }
